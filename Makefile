@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Template Docker
+# Docker Debian OS Query
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -17,8 +17,8 @@ RESET :=$(shell tput sgr0)
 # -----------------------------------------------------------------------------
 
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-GIT_REPOSITORY_NAME := $(shell git config --get remote.origin.url | cut -d'/' -f5 | cut -d'.' -f1)
-GIT_ACCOUNT_NAME := $(shell git config --get remote.origin.url | cut -d'/' -f4)
+GIT_REPOSITORY_NAME := $(shell git config --get remote.origin.url | rev | cut -d"." -f2 | cut -d"/" -f1 | rev )
+GIT_ACCOUNT_NAME := $(shell git config --get remote.origin.url | rev | cut -d"." -f2 | cut -d"/" -f2 | cut -d":" -f1 | rev)
 GIT_SHA := $(shell git log --pretty=format:'%H' -n 1)
 GIT_TAG ?= $(shell git describe --always --tags | awk -F "-" '{print $$1}')
 GIT_TAG_END ?= HEAD
@@ -29,8 +29,7 @@ GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
 # Docker Variables
 # -----------------------------------------------------------------------------
 
-STEP_1_IMAGE ?= golang:1.14.1-alpine3.11
-STEP_2_IMAGE ?= alpine:3.11
+STEP_1_IMAGE ?= debian:10.8
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := $(GIT_REPOSITORY_NAME)
@@ -50,8 +49,6 @@ docker-build: docker-rmi-for-build
 	@echo "$(BOLD)$(YELLOW)Building docker image.$(RESET)"
 	@docker build \
 		--build-arg STEP_1_IMAGE=$(STEP_1_IMAGE) \
-		--build-arg STEP_2_IMAGE=$(STEP_2_IMAGE) \
-		--build-arg TERRAFORM_VERSION=$(TERRAFORM_VERSION) \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		.
@@ -62,8 +59,6 @@ docker-build-development-cache: docker-rmi-for-build-development-cache
 	@echo "$(BOLD)$(YELLOW)Building docker image.$(RESET)"
 	@docker build \
 		--build-arg STEP_1_IMAGE=$(STEP_1_IMAGE) \
-		--build-arg STEP_2_IMAGE=$(STEP_2_IMAGE) \
-		--build-arg TERRAFORM_VERSION=$(TERRAFORM_VERSION) \
 		--tag $(DOCKER_IMAGE_TAG) \
 		.
 	@echo "$(BOLD)$(GREEN)Completed building docker image.$(RESET)"
@@ -85,4 +80,3 @@ docker-rmi-for-build-development-cache:
 .PHONY: docker-rmi-for-package
 docker-rmi-for-packagae:
 	-docker rmi --force $(DOCKER_IMAGE_PACKAGE)
-
